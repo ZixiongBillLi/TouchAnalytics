@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "656472595251",
+    "project_id": "swen-549-touchanalytics",
+    "storage_bucket": "swen-549-touchanalytics.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:656472595251:android:277c61c9a82f76087cbc46",
+        "android_client_info": {
+          "package_name": "com.swen549.touchanalytics"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9RaiwHltjewkP-0Kp4toKV9AcheF-4qg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
