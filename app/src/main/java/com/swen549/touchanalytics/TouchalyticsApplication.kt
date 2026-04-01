@@ -15,9 +15,10 @@ class TouchalyticsApplication: Application() {
 
     override fun onCreate() {
         super.onCreate()
-        val client = FirebaseClient()
 
         FirebaseDatabase.getInstance().setPersistenceEnabled(true)
+
+        val client = FirebaseClient()
         userRepository = UserRepository(client)
         messageRepository = MessageRepository(client)
         featureRepository = FeatureRepository(client, ApiClient.touchalyticsApiService)
