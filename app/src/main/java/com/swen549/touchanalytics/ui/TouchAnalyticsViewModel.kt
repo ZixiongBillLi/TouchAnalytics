@@ -1,5 +1,7 @@
 package com.swen549.touchanalytics.ui
 
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -7,8 +9,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.swen549.touchanalytics.TouchAnalyticsApplication
+import com.swen549.touchanalytics.data.Feature
 import com.swen549.touchanalytics.data.FeatureRepository
 import com.swen549.touchanalytics.data.UserRepository
+import com.swen549.touchanalytics.util.Stroke
+import com.swen549.touchanalytics.util.TouchPoint
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -94,5 +99,58 @@ class TouchAnalyticsViewModel(
         _enrollmentCount.value = 0
         _matchCount.value = 0
         _nonmatchCount.value = 0
+    }
+
+    private val _activePoints = MutableStateFlow<List<TouchPoint>>(emptyList())
+    private var _strokeStartTime: Long = 0
+
+    fun handleSwipe(change: PointerInputChange, type: PointerEventType, size: Float) {
+        val x = change.position.x
+        val y = change.position.y
+        val timestamp = change.uptimeMillis
+        val pressure = change.pressure
+
+        when (type) {
+            PointerEventType.Press -> {
+                _strokeStartTime = timestamp
+                _activePoints.value = listOf(TouchPoint(x, y, timestamp, pressure, size))
+            }
+
+            PointerEventType.Move -> {
+                _activePoints.value += TouchPoint(x, y, timestamp, pressure, size)
+            }
+
+            PointerEventType.Release -> {
+                _activePoints.value += TouchPoint(x, y, timestamp, pressure, size)
+
+                if (_activePoints.value.size > 3) {
+                    val newStroke = Stroke(
+                        userId = _userId.value!!,
+                        startTime = _strokeStartTime,
+                        endTime = timestamp,
+                        points = _activePoints.value
+                    )
+
+                    processSwipe(_userId.value!!, newStroke.toFeature())
+                }
+
+                _activePoints.value = emptyList()
+            }
+        }
+    }
+
+    fun processSwipe(userId: Int, feature: Feature) {
+        viewModelScope.launch {
+            try {
+                if (_mode.value == AppMode.ENROLLMENT) {
+                    featureRepository.saveFeature(userId, feature)
+                }
+
+                featureRepository.authenticateFeature(userId, feature)
+                // TODO Handle authentication result
+            } catch (e: Exception) {
+                // TODO Handle error
+            }
+        }
     }
 }
