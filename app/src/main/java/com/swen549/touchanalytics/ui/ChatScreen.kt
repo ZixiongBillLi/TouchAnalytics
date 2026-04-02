@@ -1,10 +1,8 @@
 package com.swen549.touchanalytics.ui
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.swen549.touchanalytics.data.Message
 
 data class ChatPartner(
     val id: Int,
