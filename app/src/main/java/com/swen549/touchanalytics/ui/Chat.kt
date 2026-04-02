@@ -1,6 +1,10 @@
 package com.swen549.touchanalytics.ui
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.swen549.touchanalytics.data.Message
 
 data class ChatPartner(
     val id: Int,
@@ -9,6 +13,12 @@ data class ChatPartner(
     val timestamp: String,
     val avatarColor: Color
 )
+
+//data class ChatPartner(
+//    val userID: Int,
+//    val messages: List<Message>,
+//    val avatarColor: Color
+//)
 
 val sampleChatPartners = listOf(
     ChatPartner(1, "Bill Li", "How's the project going?", "10:15 AM", Color(0xFF757575)),
@@ -22,3 +32,16 @@ val sampleChatPartners = listOf(
     ChatPartner(9, "Frank Miller", "I'll be a bit late.", "2:45 PM", Color(0xFFFF7043)),
     ChatPartner(10, "Grace Lee", "Good job on the demo!", "4:00 PM", Color(0xFF26A69A))
 )
+
+@Composable
+fun ChatScreen(
+    userId: Int,
+    partnerId: Int,
+    mode: AppMode,
+    sharedViewModel: TouchAnalyticsViewModel,
+    chatViewModel: ChatViewModel = viewModel(
+        factory = ChatViewModel.Factory
+    )
+) {
+
+}
