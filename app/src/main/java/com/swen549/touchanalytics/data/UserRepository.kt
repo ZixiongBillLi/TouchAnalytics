@@ -5,6 +5,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.getValue
+import com.swen549.touchanalytics.Constants
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeout
@@ -17,7 +18,7 @@ class UserRepository(
     private val TAG = "UserRepository"
 
     suspend fun createUser(user: User): Boolean = try {
-        withTimeout(10000) {
+        withTimeout(Constants.DATABASE_TIMEOUT) {
             firebaseClient.usersRef.child(user.id.toString()).setValue(user).await()
             Log.d(TAG, "createUser(): User ${user.id} confirmed on server")
             true
@@ -27,7 +28,7 @@ class UserRepository(
         false
     }
 
-    suspend fun getUser(userId: Int): User? = withTimeoutOrNull(10000) {
+    suspend fun getUser(userId: Int): User? = withTimeoutOrNull(Constants.DATABASE_TIMEOUT) {
         suspendCancellableCoroutine { continuation ->
             val ref = firebaseClient.usersRef.child(userId.toString())
             
