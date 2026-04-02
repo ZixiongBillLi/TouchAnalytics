@@ -15,13 +15,13 @@ data class TouchPoint(
 )
 
 data class Stroke(
-    val userID: Int = 0,
+    val userId: Int = 0,
     val startTime: Long = 0,
     val endTime: Long = 0,
     val points: List<TouchPoint> = emptyList()
 ) {
     fun toFeature(): Feature {
-        if (points.isEmpty()) return Feature(userID = userID)
+        if (points.isEmpty()) return Feature(userId = userId)
 
         val first = points.first()
         val last = points.last()
@@ -89,7 +89,7 @@ data class Stroke(
             } else 0f
 
         return Feature(
-            userID = userID,
+            userId = userId,
             startX = startX,
             stopX = stopX,
             startY = startY,
