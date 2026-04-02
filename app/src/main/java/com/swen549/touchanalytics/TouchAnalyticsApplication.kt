@@ -16,6 +16,7 @@ class TouchAnalyticsApplication: Application() {
     override fun onCreate() {
         super.onCreate()
 
+        // Enable offline persistence
         FirebaseDatabase.getInstance().setPersistenceEnabled(true)
 
         val client = FirebaseClient()
