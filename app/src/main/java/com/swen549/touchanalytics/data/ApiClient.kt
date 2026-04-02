@@ -5,7 +5,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object ApiClient {
-    private val BASE_URL = BuildConfig.SERVER_URL
+    private const val BASE_URL = BuildConfig.SERVER_URL
 
     val touchalyticsApiService: TouchalyticsApiService by lazy {
         Retrofit.Builder()
