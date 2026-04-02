@@ -8,5 +8,5 @@ class FirebaseClient {
     
     val usersRef: DatabaseReference by lazy { database.getReference("users") }
     val messagesRef: DatabaseReference by lazy { database.getReference("messages") }
-    val featuresRef: DatabaseReference by lazy { database.getReference("touches") }
+    val featuresRef: DatabaseReference by lazy { database.getReference("features") }
 }
