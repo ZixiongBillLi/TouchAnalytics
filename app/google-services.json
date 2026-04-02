@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "656472595251",
+    "firebase_url": "https://swen-549-touchanalytics-default-rtdb.firebaseio.com",
     "project_id": "swen-549-touchanalytics",
     "storage_bucket": "swen-549-touchanalytics.firebasestorage.app"
   },

@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.swen549.touchanalytics.ui.TouchalyticsApp
+import com.swen549.touchanalytics.ui.TouchAnalyticsApp
 import com.swen549.touchanalytics.ui.theme.TouchAnalyticsTheme
 
 class MainActivity : ComponentActivity() {
@@ -13,7 +13,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TouchAnalyticsTheme {
-                TouchalyticsApp()
+                TouchAnalyticsApp()
             }
         }
     }
