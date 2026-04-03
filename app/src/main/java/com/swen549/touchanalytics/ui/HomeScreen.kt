@@ -1,6 +1,7 @@
 package com.swen549.touchanalytics.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
@@ -215,7 +216,22 @@ fun ChatListItem(partner: ChatPartner) {
             modifier = Modifier
                 .size(48.dp)
                 .background(partner.avatarColor, CircleShape)
-        )
+        ) {
+            Text(
+                text = partner.name.split(" ").mapNotNull { it.firstOrNull() }.joinToString("").uppercase(),
+                color = Color.White,
+                modifier = Modifier.align(Alignment.Center)
+            )
+
+            // Status Dot
+            Box(
+                modifier = Modifier
+                    .size(14.dp)
+                    .align(Alignment.BottomEnd)
+                    .background(Color.LightGray, shape = CircleShape)
+                    .border(2.dp, Color.White, shape = CircleShape)
+            )
+        }
         
         Spacer(modifier = Modifier.width(16.dp))
         
