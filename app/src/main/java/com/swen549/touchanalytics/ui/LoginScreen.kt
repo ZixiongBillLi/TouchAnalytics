@@ -7,7 +7,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -96,10 +99,16 @@ fun LoginScreen(
                         errorText = "User ID must be at least 3 digits"
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth(0.6f)
+                    .padding(vertical = 12.dp),
                 shape = MaterialTheme.shapes.medium
             ) {
-                Text("Login")
+                Text(
+                    text = "LOGIN",
+                    letterSpacing = TextUnit(0.4f, TextUnitType.Sp),
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }
