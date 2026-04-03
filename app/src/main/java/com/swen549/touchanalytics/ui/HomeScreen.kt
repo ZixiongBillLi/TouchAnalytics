@@ -38,6 +38,8 @@ fun HomeScreen(
     val appMode by sharedViewModel.mode.collectAsStateWithLifecycle()
     val showMoreMenu by viewModel.showMoreMenu.collectAsStateWithLifecycle()
     val enrollmentCount by sharedViewModel.enrollmentCount.collectAsStateWithLifecycle()
+    val matchCount by sharedViewModel.matchCount.collectAsStateWithLifecycle()
+    val nonmatchCount by sharedViewModel.nonmatchCount.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -52,7 +54,9 @@ fun HomeScreen(
         bottomBar = {
             BottomBar(
                 mode = appMode,
-                enrollmentCount = enrollmentCount
+                enrollmentCount = enrollmentCount,
+                matchCount = matchCount,
+                nonmatchCount = nonmatchCount
             )
         }
     ) { innerPadding ->
@@ -132,6 +136,8 @@ fun TopBar(
 fun BottomBar(
     mode: AppMode,
     enrollmentCount: Int,
+    matchCount: Int,
+    nonmatchCount: Int,
 ) {
     BottomAppBar {
         if (mode == AppMode.ENROLLMENT) {
@@ -152,7 +158,7 @@ fun BottomBar(
             ) {
                 BottomBarColumn(
                     text = "MATCH",
-                    count = 0,
+                    count = matchCount,
                     modifier = Modifier.weight(1f)
                 )
 
@@ -160,7 +166,7 @@ fun BottomBar(
 
                 BottomBarColumn(
                     text = "NONMATCH",
-                    count = 0,
+                    count = nonmatchCount,
                     modifier = Modifier.weight(1f),
                     color = MaterialTheme.colorScheme.error
                 )

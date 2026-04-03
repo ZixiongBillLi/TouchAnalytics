@@ -1,5 +1,6 @@
 package com.swen549.touchanalytics.ui
 
+import android.util.Log
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.lifecycle.ViewModel
@@ -8,14 +9,17 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.swen549.touchanalytics.Constants
 import com.swen549.touchanalytics.TouchAnalyticsApplication
 import com.swen549.touchanalytics.data.Feature
 import com.swen549.touchanalytics.data.FeatureRepository
 import com.swen549.touchanalytics.data.UserRepository
 import com.swen549.touchanalytics.util.Stroke
 import com.swen549.touchanalytics.util.TouchPoint
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 sealed class LoginStatus {
@@ -44,28 +48,7 @@ class TouchAnalyticsViewModel(
     private var _loginState = MutableStateFlow<LoginStatus>(LoginStatus.NotLoggedIn)
     val loginState = _loginState.asStateFlow()
 
-    fun login(userId: Int) {
-        viewModelScope.launch {
-            _loginState.value = LoginStatus.Loading
-            try {
-                val user = userRepository.loginOrRegister(userId)
-                _loginState.value = LoginStatus.LoggedIn(user.id)
-                _userId.value = user.id
-            } catch (e: Exception) {
-                _loginState.value = LoginStatus.Error(e.message ?: "Unknown error")
-            }
-        }
-    }
-
-    fun logout() {
-        _loginState.value = LoginStatus.NotLoggedIn
-        _userId.value = null
-        _mode.value = AppMode.ENROLLMENT
-        resetStats()
-    }
-
     private val _userId = MutableStateFlow<Int?>(null)
-    val userId = _userId.asStateFlow()
 
     private val _mode = MutableStateFlow(AppMode.ENROLLMENT)
     val mode = _mode.asStateFlow()
@@ -79,20 +62,49 @@ class TouchAnalyticsViewModel(
     private val _nonmatchCount = MutableStateFlow(0)
     val nonmatchCount = _nonmatchCount.asStateFlow()
 
-    fun setMode(newMode: AppMode) {
-        _mode.value = newMode
+    private var observationJob: Job? = null
+
+    fun login(userId: Int) {
+        viewModelScope.launch {
+            _loginState.value = LoginStatus.Loading
+            try {
+                val user = userRepository.loginOrRegister(userId)
+                _userId.value = user.id
+
+                val initialCount = featureRepository.getEnrollmentCount(user.id).first()
+                _enrollmentCount.value = initialCount
+
+                _mode.value = if (initialCount < Constants.MIN_STROKE_COUNT) {
+                    AppMode.ENROLLMENT
+                } else {
+                    AppMode.VERIFICATION
+                }
+
+                _loginState.value = LoginStatus.LoggedIn(user.id)
+
+                observationJob?.cancel()
+                observationJob = viewModelScope.launch {
+                    featureRepository.getEnrollmentCount(user.id).collect { count ->
+                        _enrollmentCount.value = count
+
+                        if (count >= Constants.MIN_STROKE_COUNT) {
+                            _mode.value = AppMode.VERIFICATION
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                _loginState.value = LoginStatus.Error(e.message ?: "Unknown error")
+            }
+        }
     }
 
-    fun setEnrollmentCount(value: Int) {
-        _enrollmentCount.value = value
-    }
-
-    fun setMatchCount(value: Int) {
-        _matchCount.value = value
-    }
-
-    fun setNonMatchCount(value: Int) {
-        _nonmatchCount.value = value
+    fun logout() {
+        observationJob?.cancel()
+        observationJob = null
+        _loginState.value = LoginStatus.NotLoggedIn
+        _userId.value = null
+        _mode.value = AppMode.ENROLLMENT
+        resetStats()
     }
 
     fun resetStats() {
@@ -123,7 +135,7 @@ class TouchAnalyticsViewModel(
             PointerEventType.Release -> {
                 _activePoints.value += TouchPoint(x, y, timestamp, pressure, size)
 
-                if (_activePoints.value.size > 3) {
+                if (_activePoints.value.size > 3 && _userId.value != null) {
                     val newStroke = Stroke(
                         userId = _userId.value!!,
                         startTime = _strokeStartTime,
@@ -143,13 +155,13 @@ class TouchAnalyticsViewModel(
         viewModelScope.launch {
             try {
                 if (_mode.value == AppMode.ENROLLMENT) {
-                    featureRepository.saveFeature(userId, feature)
+                    featureRepository.saveFeature(userId, feature, _mode.value)
+                } else {
+                    featureRepository.authenticateFeature(userId, feature)
+                    // TODO Handle authentication result
                 }
-
-                featureRepository.authenticateFeature(userId, feature)
-                // TODO Handle authentication result
             } catch (e: Exception) {
-                // TODO Handle error
+                Log.e("TouchAnalyticsVM", "Error processing swipe: ${e.message}")
             }
         }
     }
