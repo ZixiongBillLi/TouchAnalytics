@@ -29,14 +29,12 @@ sealed interface Routes {
     @Serializable
     data class Home(
         val userId: Int,
-        val mode: AppMode
     ) : Routes
 
     @Serializable
     data class Chat(
         val userId: Int,
         val partnerId: Int,
-        val mode: AppMode
     ) : Routes
 }
 
@@ -80,7 +78,6 @@ fun TouchAnalyticsApp(
                         navController.navigate(
                             Routes.Home(
                                 userId = userId,
-                                mode = AppMode.ENROLLMENT,
                             )
                         )
                     },
@@ -93,7 +90,6 @@ fun TouchAnalyticsApp(
 
                 HomeScreen(
                     userId = homeArgs.userId,
-                    mode = homeArgs.mode,
                     navigateBack = navController::popBackStack,
                     sharedViewModel = sharedViewModel
                 )
@@ -105,7 +101,6 @@ fun TouchAnalyticsApp(
                 ChatScreen(
                     userId = chatArgs.userId,
                     partnerId = chatArgs.partnerId,
-                    mode = chatArgs.mode,
                     sharedViewModel = sharedViewModel
                 )
             }

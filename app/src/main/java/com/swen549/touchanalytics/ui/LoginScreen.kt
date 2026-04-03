@@ -11,15 +11,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun LoginScreen(
     onLoginSuccess: (Int) -> Unit,
     sharedViewModel: TouchAnalyticsViewModel,
-    viewModel: LoginViewModel = viewModel(
-        factory = LoginViewModel.Factory
-    )
 ) {
     val loginState by sharedViewModel.loginState.collectAsStateWithLifecycle()
 
