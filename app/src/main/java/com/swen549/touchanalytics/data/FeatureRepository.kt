@@ -4,6 +4,7 @@ import android.util.Log
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.getValue
 import com.google.gson.JsonObject
 import com.swen549.touchanalytics.Constants
 import com.swen549.touchanalytics.ui.AppMode
@@ -15,10 +16,10 @@ import kotlinx.coroutines.withTimeout
 import retrofit2.Response
 
 sealed class FeatureType {
-    data class Enrollment(val feature: Feature) : FeatureType()
+    data class Enrollment(val feature: Feature = Feature()) : FeatureType()
     data class Verification(
-        val feature: Feature,
-        val match: Boolean
+        val feature: Feature = Feature(),
+        val match: Boolean = false
     ) : FeatureType()
 }
 
@@ -58,6 +59,26 @@ class FeatureRepository(
 
             override fun onCancelled(e: DatabaseError) {
                 Log.e(TAG, "getEnrollmentCount(): Failed to sync with server: ${e.message}")
+                close(e.toException())
+            }
+        }
+
+        ref.addValueEventListener(listener)
+        awaitClose { ref.removeEventListener(listener) }
+    }
+
+    fun getAllVerifications(userId: Int): Flow<List<FeatureType.Verification>> = callbackFlow {
+        val ref = firebaseClient.featuresRef.child(userId.toString()).child("verification")
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val list = snapshot.children.mapNotNull { child ->
+                    child.getValue<FeatureType.Verification>()
+                }
+                trySend(list)
+            }
+
+            override fun onCancelled(e: DatabaseError) {
+                Log.e(TAG, "getVerification(): Failed to sync with server: ${e.message}")
                 close(e.toException())
             }
         }
