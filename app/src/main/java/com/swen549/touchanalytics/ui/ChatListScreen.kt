@@ -1,6 +1,8 @@
 package com.swen549.touchanalytics.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -23,16 +26,19 @@ fun ChatListScreen(userId: Int) {
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
+                    Column (
+                        Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         Text(text = "User ID: $userId", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Text(text = "Messages", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /* Handle more options */ }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "More")
                     }
                 }
+//                ,
+//                actions = {
+//                    IconButton(onClick = {}) {
+//                        Icon(Icons.Default.MoreVert, contentDescription = "More")
+//                    }
+//                }
             )
         }
     ) { innerPadding ->
@@ -55,41 +61,49 @@ fun ChatListScreen(userId: Int) {
 
 @Composable
 fun ChatListItem(partner: ChatPartner) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Avatar
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .background(partner.avatarColor, CircleShape)
+    Box(
+        Modifier.clickable(
+            enabled = true,
+            onClick = {/* switch to chat screen */}
         )
-        
-        Spacer(modifier = Modifier.width(16.dp))
-        
-        // Name and Last Message
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = partner.name,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold
+    ){
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Avatar
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(partner.avatarColor, CircleShape)
             )
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Name and Last Message
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = partner.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = partner.lastMessage,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray,
+                    maxLines = 1
+                )
+            }
+
+            // Time
             Text(
-                text = partner.lastMessage,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray,
-                maxLines = 1
+                text = partner.timestamp,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
             )
         }
-        
-        // Time
-        Text(
-            text = partner.timestamp,
-            style = MaterialTheme.typography.bodySmall,
-            color = Color.Gray
-        )
     }
+
 }
