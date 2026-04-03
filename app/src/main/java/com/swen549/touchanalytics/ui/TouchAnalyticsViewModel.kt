@@ -13,6 +13,7 @@ import com.swen549.touchanalytics.Constants
 import com.swen549.touchanalytics.TouchAnalyticsApplication
 import com.swen549.touchanalytics.data.Feature
 import com.swen549.touchanalytics.data.FeatureRepository
+import com.swen549.touchanalytics.data.FeatureType
 import com.swen549.touchanalytics.data.UserRepository
 import com.swen549.touchanalytics.util.Stroke
 import com.swen549.touchanalytics.util.TouchPoint
@@ -155,10 +156,13 @@ class TouchAnalyticsViewModel(
         viewModelScope.launch {
             try {
                 if (_mode.value == AppMode.ENROLLMENT) {
-                    featureRepository.saveFeature(userId, feature, _mode.value)
-                } else {
-                    featureRepository.authenticateFeature(userId, feature)
+                    featureRepository.saveFeature(userId, FeatureType.Enrollment(feature), _mode.value)
+                }
+
+                if (_mode.value == AppMode.VERIFICATION) {
+//                    featureRepository.authenticateFeature(userId, feature)
                     // TODO Handle authentication result
+                    featureRepository.saveFeature(userId, FeatureType.Verification(feature, true), _mode.value)
                 }
             } catch (e: Exception) {
                 Log.e("TouchAnalyticsVM", "Error processing swipe: ${e.message}")

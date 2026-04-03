@@ -14,15 +14,31 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeout
 import retrofit2.Response
 
+sealed class FeatureType {
+    data class Enrollment(val feature: Feature) : FeatureType()
+    data class Verification(
+        val feature: Feature,
+        val match: Boolean
+    ) : FeatureType()
+}
+
 class FeatureRepository(
     private val firebaseClient: FirebaseClient,
     private val touchalyticsApiService: TouchalyticsApiService
 ) {
     private val TAG = "FeatureRepository"
 
-    suspend fun saveFeature(userId: Int, feature: Feature, mode: AppMode): Boolean = try {
+    suspend fun saveFeature(userId: Int, feature: FeatureType, mode: AppMode): Boolean = try {
         withTimeout(Constants.DATABASE_TIMEOUT) {
-            firebaseClient.featuresRef.child(userId.toString()).child("features").child(mode.toString().lowercase()).push().setValue(feature).await()
+            val modePath = mode.toString().lowercase()
+
+            firebaseClient.featuresRef
+                .child(userId.toString())
+                .child(modePath)
+                .push()
+                .setValue(feature)
+                .await()
+                
             Log.d(TAG, "saveFeature(): Feature confirmed on server")
             true
         }
@@ -32,11 +48,11 @@ class FeatureRepository(
     }
 
     fun getEnrollmentCount(userId: Int): Flow<Int> = callbackFlow {
-        val ref = firebaseClient.featuresRef.child(userId.toString()).child("features").child("enrollment")
+        val ref = firebaseClient.featuresRef.child(userId.toString()).child("enrollment")
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val count = snapshot.childrenCount.toInt()
-                Log.d(TAG, "getEnrollmentCount(): Data received for $userId. Count: $count")
+                Log.d(TAG, "getEnrollmentCount(): Count for $userId: $count")
                 trySend(count)
             }
 
