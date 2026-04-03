@@ -21,6 +21,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 
 sealed class LoginStatus {
@@ -63,7 +65,7 @@ class TouchAnalyticsViewModel(
     private val _nonmatchCount = MutableStateFlow(0)
     val nonmatchCount = _nonmatchCount.asStateFlow()
 
-    private var observationJob: Job? = null
+    private var observationJobs: List<Job> = emptyList()
 
     fun login(userId: Int) {
         viewModelScope.launch {
@@ -83,14 +85,21 @@ class TouchAnalyticsViewModel(
 
                 _loginState.value = LoginStatus.LoggedIn(user.id)
 
-                observationJob?.cancel()
-                observationJob = viewModelScope.launch {
+                observationJobs.forEach { it.cancel() }
+                observationJobs += viewModelScope.launch {
                     featureRepository.getEnrollmentCount(user.id).collect { count ->
                         _enrollmentCount.value = count
 
                         if (count >= Constants.MIN_STROKE_COUNT) {
                             _mode.value = AppMode.VERIFICATION
                         }
+                    }
+                }
+
+                observationJobs += viewModelScope.launch {
+                    featureRepository.getAllVerifications(user.id).collect { list ->
+                        _matchCount.value = list.count { it.match }
+                        _nonmatchCount.value = list.count { !it.match }
                     }
                 }
             } catch (e: Exception) {
@@ -100,8 +109,8 @@ class TouchAnalyticsViewModel(
     }
 
     fun logout() {
-        observationJob?.cancel()
-        observationJob = null
+        observationJobs.forEach { it.cancel() }
+        observationJobs = emptyList()
         _loginState.value = LoginStatus.NotLoggedIn
         _userId.value = null
         _mode.value = AppMode.ENROLLMENT
