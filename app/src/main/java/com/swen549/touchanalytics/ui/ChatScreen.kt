@@ -35,7 +35,6 @@ val sampleChatPartners = listOf(
 fun ChatScreen(
     userId: Int,
     partnerId: Int,
-    mode: AppMode,
     sharedViewModel: TouchAnalyticsViewModel,
     chatViewModel: ChatViewModel = viewModel(
         factory = ChatViewModel.Factory

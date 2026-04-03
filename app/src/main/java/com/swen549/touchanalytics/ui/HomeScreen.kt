@@ -2,13 +2,13 @@ package com.swen549.touchanalytics.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -19,69 +19,40 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.swen549.touchanalytics.Constants
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     userId: Int,
-    mode: AppMode,
     navigateBack: () -> Unit,
     sharedViewModel: TouchAnalyticsViewModel,
     viewModel: HomeViewModel = viewModel(
         factory = HomeViewModel.Factory
     ),
 ) {
+    val appMode by sharedViewModel.mode.collectAsStateWithLifecycle()
     val showMoreMenu by viewModel.showMoreMenu.collectAsStateWithLifecycle()
+    val enrollmentCount by sharedViewModel.enrollmentCount.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(text = "User ID: $userId", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Text(text = "Messages", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /* Handle search */ }) {
-                        Icon(Icons.Default.Search, contentDescription = "Search")
-                    }
-
-                    Box {
-                        IconButton(onClick = { viewModel.setShowMoreMenu(true) }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "More")
-                        }
-
-                        DropdownMenu(
-                            expanded = showMoreMenu,
-                            onDismissRequest = { viewModel.setShowMoreMenu(false) },
-                            modifier = Modifier
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Logout") },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.Logout,
-                                        contentDescription = "Logout"
-                                    )
-                                },
-                                onClick = {
-                                    sharedViewModel.logout()
-                                    navigateBack()
-                                },
-                                modifier = Modifier
-                                    .padding(horizontal = 8.dp)
-                                    .clip(RoundedCornerShape(8.dp)
-                                )
-                            )
-                        }
-                    }
-                }
+            TopBar(
+                userId = userId,
+                navigateBack = navigateBack,
+                showMoreMenu = showMoreMenu,
+                setShowMoreMenu = viewModel::setShowMoreMenu,
+                logout = sharedViewModel::logout
+            )
+        },
+        bottomBar = {
+            BottomBar(
+                mode = appMode,
+                enrollmentCount = enrollmentCount
             )
         }
     ) { innerPadding ->
@@ -99,6 +70,129 @@ fun HomeScreen(
                 )
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TopBar(
+    navigateBack: () -> Unit,
+    showMoreMenu: Boolean,
+    setShowMoreMenu: (Boolean) -> Unit,
+    userId: Int,
+    logout: () -> Unit
+) {
+    TopAppBar(
+        title = {
+            Column {
+                Text(text = "Messages", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text(text = "User ID: $userId", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        },
+        actions = {
+            IconButton(onClick = { /* Handle search */ }) {
+                Icon(Icons.Default.Search, contentDescription = "Search")
+            }
+
+            Box {
+                IconButton(onClick = { setShowMoreMenu(true) }) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "More")
+                }
+
+                DropdownMenu(
+                    expanded = showMoreMenu,
+                    onDismissRequest = { setShowMoreMenu(false) },
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Logout") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Logout,
+                                contentDescription = "Logout"
+                            )
+                        },
+                        onClick = {
+                            logout()
+                            navigateBack()
+                        },
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp)
+                            .clip(RoundedCornerShape(8.dp)
+                            )
+                    )
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun BottomBar(
+    mode: AppMode,
+    enrollmentCount: Int,
+) {
+    BottomAppBar {
+        if (mode == AppMode.ENROLLMENT) {
+            Text(
+                text = "$mode MODE: $enrollmentCount / ${Constants.MIN_STROKE_COUNT}",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.fillMaxWidth()
+            )
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                BottomBarColumn(
+                    text = "MATCH",
+                    count = 0,
+                    modifier = Modifier.weight(1f)
+                )
+
+                VerticalDivider()
+
+                BottomBarColumn(
+                    text = "NONMATCH",
+                    count = 0,
+                    modifier = Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun BottomBarColumn(
+    text: String,
+    count: Int,
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.primary
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = modifier
+    ) {
+        Text(
+            text = text,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+
+        Text(
+            text = count.toString(),
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
     }
 }
 
