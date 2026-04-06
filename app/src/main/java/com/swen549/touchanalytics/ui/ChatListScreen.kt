@@ -1,72 +1,77 @@
 package com.swen549.touchanalytics.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatListScreen(userId: Int) {
+fun ChatListScreen(
+    viewModel: TouchViewModel = viewModel(),
+    onPartnerClick: (Int) -> Unit
+) {
+    // To create an infinite-like looping list
+    val infiniteCount = Int.MAX_VALUE
+    val startIndex = (infiniteCount / 2) - (infiniteCount / 2 % sampleChatPartners.size)
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = startIndex)
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Column (
+                    Column(
                         Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(text = "User ID: $userId", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "User ID: ${viewModel.userID ?: "Unknown"}",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
-//                ,
-//                actions = {
-//                    IconButton(onClick = {}) {
-//                        Icon(Icons.Default.MoreVert, contentDescription = "More")
-//                    }
-//                }
             )
         }
     ) { innerPadding ->
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            items(sampleChatPartners) { partner ->
-                ChatListItem(partner)
-                HorizontalDivider(
-                    modifier = Modifier.padding(start = 72.dp),
-                    thickness = 0.5.dp,
-                    color = Color.LightGray
-                )
-            }
+            items(
+                count = infiniteCount,
+                itemContent = { index ->
+                    val partner = sampleChatPartners[index % sampleChatPartners.size]
+                    ChatListItem(partner, onClick = { onPartnerClick(partner.id) })
+                    HorizontalDivider(
+                        modifier = Modifier.padding(start = 72.dp),
+                        thickness = 0.5.dp,
+                        color = Color.LightGray
+                    )
+                }
+            )
         }
     }
 }
 
 @Composable
-fun ChatListItem(partner: ChatPartner) {
+fun ChatListItem(partner: ChatPartner, onClick: () -> Unit) {
     Box(
-        Modifier.clickable(
-            enabled = true,
-            onClick = {/* switch to chat screen */}
-        )
-    ){
+        Modifier.clickable(onClick = onClick)
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -105,5 +110,4 @@ fun ChatListItem(partner: ChatPartner) {
             )
         }
     }
-
 }
