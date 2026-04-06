@@ -49,6 +49,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.database)
     implementation(libs.firebase.analytics)
+    implementation(libs.firebase.firestore)
 
     // Add Navigation Compose dependency
     implementation("androidx.navigation:navigation-compose:2.8.5")
