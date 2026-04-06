@@ -51,9 +51,9 @@ fun TouchAnalyticsApp() {
         }
         composable(
             route = "chat/{partnerId}",
-            arguments = listOf(navArgument("partnerId") { type = NavType.IntType })
+            arguments = listOf(navArgument("partnerId") { type = NavType.LongType })
         ) { backStackEntry ->
-            val partnerId = backStackEntry.arguments?.getInt("partnerId") ?: 0
+            val partnerId = backStackEntry.arguments?.getLong("partnerId") ?: 0L
             ChatScreen(
                 partnerId = partnerId,
                 onBack = { navController.popBackStack() },

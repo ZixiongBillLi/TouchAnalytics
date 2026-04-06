@@ -20,7 +20,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun ChatListScreen(
     viewModel: TouchViewModel = viewModel(),
-    onPartnerClick: (Int) -> Unit
+    onPartnerClick: (Long) -> Unit
 ) {
     // To create an infinite-like looping list
     val infiniteCount = Int.MAX_VALUE

@@ -19,11 +19,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.swen549.touchanalytics.data.Message
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
-    partnerId: Int,
+    partnerId: Long,
     onBack: () -> Unit,
     viewModel: TouchViewModel = viewModel()
 ) {
@@ -103,7 +104,7 @@ fun MessageItem(message: Message, avatarColor: Color) {
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
-            text = message.timestamp,
+            text = message.timestamp.toDate().toString(), // Simple fix to display timestamp string
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(bottom = 8.dp),
