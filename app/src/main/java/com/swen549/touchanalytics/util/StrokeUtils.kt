@@ -1,25 +1,10 @@
 package com.swen549.touchanalytics.util
 
+import com.swen549.touchanalytics.data.Feature
 import kotlin.math.atan2
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
-
-
-data class Feature(
-    val userID: Int = 0,
-    val startX: Float = 0f,
-    val stopX: Float = 0f,
-    val startY: Float = 0f,
-    val stopY: Float = 0f,
-    val strokeDuration: Float = 0f,
-    val midStrokeArea: Float = 0f,
-    val midStrokePressure: Float = 0f,
-    val directionEndToEnd: Float = 0f,
-    val averageDirection: Float = 0f,
-    val averageVelocity: Float = 0f,
-    val pairwiseVelocityPercentile: Float = 0f
-)
 
 data class TouchPoint(
     val x: Float,
@@ -30,13 +15,13 @@ data class TouchPoint(
 )
 
 data class Stroke(
-    val userID: Int = 0,
+    val userId: Int = 0,
     val startTime: Long = 0,
     val endTime: Long = 0,
     val points: List<TouchPoint> = emptyList()
 ) {
     fun toFeature(): Feature {
-        if (points.isEmpty()) return Feature(userID = userID)
+        if (points.isEmpty()) return Feature(userId = userId)
 
         val first = points.first()
         val last = points.last()
@@ -56,50 +41,55 @@ data class Stroke(
         val midStrokeArea = (maxX - minX) * (maxY - minY)
 
         // Mid-stroke Pressure
-        val midStrokePressure = if (points.size >= 3) {
-            points.subList(points.size / 4, 3 * points.size / 4)
-                .map { it.pressure }
-                .average()
-                .toFloat()
-        } else 0f
+        val midStrokePressure =
+            if (points.size >= 3) {
+                points.subList(points.size / 4, 3 * points.size / 4)
+                    .map { it.pressure }
+                    .average()
+                    .toFloat()
+            } else 0f
 
         // Directions
-        val directionEndToEnd = if (points.size >= 2) {
-            atan2((last.y - first.y).toDouble(), (last.x - first.x).toDouble()).toFloat()
-        } else 0f
+        val directionEndToEnd =
+            if (points.size >= 2) {
+                atan2((last.y - first.y).toDouble(), (last.x - first.x).toDouble()).toFloat()
+            } else 0f
 
-        val averageDirection = if (points.size >= 2) {
-            points.zipWithNext { a, b ->
-                atan2((b.y - a.y).toDouble(), (b.x - a.x).toDouble())
-            }.average().toFloat()
-        } else 0f
+        val averageDirection =
+            if (points.size >= 2) {
+                points.zipWithNext { a, b ->
+                    atan2((b.y - a.y).toDouble(), (b.x - a.x).toDouble())
+                }.average().toFloat()
+            } else 0f
 
         // Velocities
-        val averageVelocity = if (points.size >= 2) {
-            val totalDistance = points.zipWithNext { a, b ->
-                sqrt((b.x - a.x).pow(2) + (b.y - a.y).pow(2))
-            }.sum()
-            val totalTime = last.timestamp - first.timestamp
-            if (totalTime > 0) totalDistance / totalTime else 0f
-        } else 0f
-
-        val pairwiseVelocityPercentile = if (points.size >= 2) {
-            val velocities = points.zipWithNext { a, b ->
-                val dt = b.timestamp - a.timestamp
-                if (dt > 0) {
-                    val distance = sqrt((b.x - a.x).pow(2) + (b.y - a.y).pow(2))
-                    distance / dt
-                } else null
-            }.filterNotNull().sorted()
-
-            if (velocities.isNotEmpty()) {
-                val index = ((velocities.size - 1) * 0.5f).roundToInt()
-                velocities[index]
+        val averageVelocity =
+            if (points.size >= 2) {
+                val totalDistance = points.zipWithNext { a, b ->
+                    sqrt((b.x - a.x).pow(2) + (b.y - a.y).pow(2))
+                }.sum()
+                val totalTime = last.timestamp - first.timestamp
+                if (totalTime > 0) totalDistance / totalTime else 0f
             } else 0f
-        } else 0f
+
+        val pairwiseVelocityPercentile =
+            if (points.size >= 2) {
+                val velocities = points.zipWithNext { a, b ->
+                    val dt = b.timestamp - a.timestamp
+                    if (dt > 0) {
+                        val distance = sqrt((b.x - a.x).pow(2) + (b.y - a.y).pow(2))
+                        distance / dt
+                    } else null
+                }.filterNotNull().sorted()
+
+                if (velocities.isNotEmpty()) {
+                    val index = ((velocities.size - 1) * 0.5f).roundToInt()
+                    velocities[index]
+                } else 0f
+            } else 0f
 
         return Feature(
-            userID = userID,
+            userId = userId,
             startX = startX,
             stopX = stopX,
             startY = startY,
