@@ -18,22 +18,19 @@ class TouchViewModel : ViewModel() {
     var mode by mutableStateOf(AppMode.ENROLLMENT)
         private set
 
-    var enrollmentCount by mutableStateOf(20) // Sample data
-        private set
-    
-    val maxEnrollment = 50
-
-    var matchCount by mutableStateOf(14) // Sample data
+    var enrollmentCount by mutableStateOf(0)
         private set
 
-    var mismatchCount by mutableStateOf(5) // Sample data
+    var lastResult by mutableStateOf<String?>(null)
+        private set
+
+    var matchCount by mutableStateOf(0)
+        private set
+
+    var mismatchCount by mutableStateOf(0)
         private set
 
     fun login(id: Int) {
         userID = id
-    }
-
-    fun toggleMode() {
-        mode = if (mode == AppMode.ENROLLMENT) AppMode.VERIFICATION else AppMode.ENROLLMENT
     }
 }
