@@ -21,8 +21,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 
 sealed class LoginStatus {
@@ -165,13 +163,20 @@ class TouchAnalyticsViewModel(
         viewModelScope.launch {
             try {
                 if (_mode.value == AppMode.ENROLLMENT) {
-                    featureRepository.saveFeature(userId, FeatureType.Enrollment(feature), _mode.value)
+                    featureRepository.saveFeature(userId, FeatureType.Enrollment(feature))
                 }
 
                 if (_mode.value == AppMode.VERIFICATION) {
-//                    featureRepository.authenticateFeature(userId, feature)
-                    // TODO Handle authentication result
-                    featureRepository.saveFeature(userId, FeatureType.Verification(feature, true), _mode.value)
+                    val response = featureRepository.authenticateFeature(userId, feature)
+
+                    if (response.isSuccessful && response.body() != null) {
+                        val isMatch = response.body()!!.get("match").asBoolean
+                        val message = response.body()!!.get("message").asString
+
+                        Log.d("TouchAnalyticsVM", "Auth result: $message (Match: $isMatch)")
+                    } else {
+                        Log.e("TouchAnalyticsVM", "Authentication failed: ${response.errorBody()?.string()}")
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("TouchAnalyticsVM", "Error processing swipe: ${e.message}")

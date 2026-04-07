@@ -7,7 +7,6 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.getValue
 import com.google.gson.JsonObject
 import com.swen549.touchanalytics.Constants
-import com.swen549.touchanalytics.ui.AppMode
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -29,15 +28,17 @@ class FeatureRepository(
 ) {
     private val TAG = "FeatureRepository"
 
-    suspend fun saveFeature(userId: Int, feature: FeatureType, mode: AppMode): Boolean = try {
+    suspend fun saveFeature(userId: Int, feature: FeatureType): Boolean = try {
         withTimeout(Constants.DATABASE_TIMEOUT) {
-            val modePath = mode.toString().lowercase()
+            val dataToSave = when (feature) {
+                is FeatureType.Enrollment -> feature.feature
+                is FeatureType.Verification -> feature.feature
+            }
 
             firebaseClient.featuresRef
                 .child(userId.toString())
-                .child(modePath)
                 .push()
-                .setValue(feature)
+                .setValue(dataToSave)
                 .await()
                 
             Log.d(TAG, "saveFeature(): Feature confirmed on server")
@@ -49,7 +50,7 @@ class FeatureRepository(
     }
 
     fun getEnrollmentCount(userId: Int): Flow<Int> = callbackFlow {
-        val ref = firebaseClient.featuresRef.child(userId.toString()).child("enrollment")
+        val ref = firebaseClient.featuresRef.child(userId.toString())
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val count = snapshot.childrenCount.toInt()
@@ -68,11 +69,12 @@ class FeatureRepository(
     }
 
     fun getAllVerifications(userId: Int): Flow<List<FeatureType.Verification>> = callbackFlow {
-        val ref = firebaseClient.featuresRef.child(userId.toString()).child("verification")
+        val ref = firebaseClient.featuresRef.child(userId.toString())
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val list = snapshot.children.mapNotNull { child ->
-                    child.getValue<FeatureType.Verification>()
+                    val f = child.getValue<Feature>()
+                    if (f != null) FeatureType.Verification(f) else null
                 }
                 trySend(list)
             }
