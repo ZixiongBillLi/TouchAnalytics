@@ -28,13 +28,13 @@ sealed interface Routes {
 
     @Serializable
     data class Home(
-        val userId: Int,
+        val userId: Long,
     ) : Routes
 
     @Serializable
     data class Chat(
-        val userId: Int,
-        val partnerId: Int,
+        val userId: Long,
+        val partnerId: Long,
     ) : Routes
 }
 
@@ -90,6 +90,14 @@ fun TouchAnalyticsApp(
 
                 HomeScreen(
                     userId = homeArgs.userId,
+                    onPartnerClick = { partnerId ->
+                        navController.navigate(
+                            Routes.Chat(
+                                userId = homeArgs.userId,
+                                partnerId = partnerId
+                            )
+                        )
+                    },
                     navigateBack = navController::popBackStack,
                     sharedViewModel = sharedViewModel
                 )
@@ -101,6 +109,7 @@ fun TouchAnalyticsApp(
                 ChatScreen(
                     userId = chatArgs.userId,
                     partnerId = chatArgs.partnerId,
+                    navigateBack = navController::popBackStack,
                     sharedViewModel = sharedViewModel
                 )
             }

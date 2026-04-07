@@ -7,9 +7,7 @@ plugins {
 
 android {
     namespace = "com.swen549.touchanalytics"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.swen549.touchanalytics"

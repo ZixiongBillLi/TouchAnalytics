@@ -28,7 +28,7 @@ class UserRepository(
         false
     }
 
-    suspend fun getUser(userId: Int): User? = withTimeoutOrNull(Constants.DATABASE_TIMEOUT) {
+    suspend fun getUser(userId: Long): User? = withTimeoutOrNull(Constants.DATABASE_TIMEOUT) {
         suspendCancellableCoroutine { continuation ->
             val ref = firebaseClient.usersRef.child(userId.toString())
             
@@ -54,7 +54,7 @@ class UserRepository(
         }
     }
 
-    suspend fun loginOrRegister(userId: Int): User {
+    suspend fun loginOrRegister(userId: Long): User {
         val existingUser = getUser(userId)
         if (existingUser != null) {
             return existingUser
