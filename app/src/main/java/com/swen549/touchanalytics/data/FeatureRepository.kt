@@ -28,7 +28,7 @@ class FeatureRepository(
 ) {
     private val TAG = "FeatureRepository"
 
-    suspend fun saveFeature(userId: Int, feature: FeatureType): Boolean = try {
+    suspend fun saveFeature(userId: Long, feature: FeatureType): Boolean = try {
         withTimeout(Constants.DATABASE_TIMEOUT) {
             val dataToSave = when (feature) {
                 is FeatureType.Enrollment -> feature.feature
@@ -49,7 +49,7 @@ class FeatureRepository(
         false
     }
 
-    fun getEnrollmentCount(userId: Int): Flow<Int> = callbackFlow {
+    fun getEnrollmentCount(userId: Long): Flow<Int> = callbackFlow {
         val ref = firebaseClient.featuresRef.child(userId.toString())
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -68,7 +68,7 @@ class FeatureRepository(
         awaitClose { ref.removeEventListener(listener) }
     }
 
-    fun getAllVerifications(userId: Int): Flow<List<FeatureType.Verification>> = callbackFlow {
+    fun getAllVerifications(userId: Long): Flow<List<FeatureType.Verification>> = callbackFlow {
         val ref = firebaseClient.featuresRef.child(userId.toString())
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -89,5 +89,5 @@ class FeatureRepository(
         awaitClose { ref.removeEventListener(listener) }
     }
 
-    suspend fun authenticateFeature(userId: Int, feature: Feature): Response<JsonObject> = touchalyticsApiService.authenticate(userId, feature)
+    suspend fun authenticateFeature(userId: Long, feature: Feature): Response<JsonObject> = touchalyticsApiService.authenticate(userId, feature)
 }

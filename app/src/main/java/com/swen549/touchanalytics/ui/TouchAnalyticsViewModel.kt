@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 sealed class LoginStatus {
     object NotLoggedIn : LoginStatus()
     object Loading : LoginStatus()
-    data class LoggedIn(val userId: Int) : LoginStatus()
+    data class LoggedIn(val userId: Long) : LoginStatus()
     data class Error(val message: String) : LoginStatus()
 }
 
@@ -49,7 +49,7 @@ class TouchAnalyticsViewModel(
     private var _loginState = MutableStateFlow<LoginStatus>(LoginStatus.NotLoggedIn)
     val loginState = _loginState.asStateFlow()
 
-    private val _userId = MutableStateFlow<Int?>(null)
+    private val _userId = MutableStateFlow<Long?>(null)
 
     private val _mode = MutableStateFlow(AppMode.ENROLLMENT)
     val mode = _mode.asStateFlow()
@@ -65,7 +65,7 @@ class TouchAnalyticsViewModel(
 
     private var observationJobs: List<Job> = emptyList()
 
-    fun login(userId: Int) {
+    fun login(userId: Long) {
         viewModelScope.launch {
             _loginState.value = LoginStatus.Loading
             try {
@@ -152,7 +152,7 @@ class TouchAnalyticsViewModel(
         }
     }
 
-    fun processSwipe(userId: Int, feature: Feature) {
+    fun processSwipe(userId: Long, feature: Feature) {
         viewModelScope.launch {
             try {
                 if (_mode.value == AppMode.ENROLLMENT) {

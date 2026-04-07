@@ -1,7 +1,7 @@
 package com.swen549.touchanalytics.data
 
 data class Feature(
-    val userId: Int = 0,
+    val userId: Long = 0,
     val startX: Float = 0f,
     val stopX: Float = 0f,
     val startY: Float = 0f,
