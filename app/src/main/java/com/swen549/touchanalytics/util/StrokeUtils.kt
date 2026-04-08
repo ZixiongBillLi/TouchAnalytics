@@ -15,7 +15,7 @@ data class TouchPoint(
 )
 
 data class Stroke(
-    val userId: Int = 0,
+    val userId: Long = 0,
     val startTime: Long = 0,
     val endTime: Long = 0,
     val points: List<TouchPoint> = emptyList()
