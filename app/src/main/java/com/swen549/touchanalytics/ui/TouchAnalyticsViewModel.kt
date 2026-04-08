@@ -93,13 +93,6 @@ class TouchAnalyticsViewModel(
                         }
                     }
                 }
-
-                observationJobs += viewModelScope.launch {
-                    featureRepository.getAllVerifications(user.id).collect { list ->
-                        _matchCount.value = list.count { it.match }
-                        _nonmatchCount.value = list.count { !it.match }
-                    }
-                }
             } catch (e: Exception) {
                 _loginState.value = LoginStatus.Error(e.message ?: "Unknown error")
             }
@@ -174,6 +167,8 @@ class TouchAnalyticsViewModel(
                         val message = response.body()!!.get("message").asString
 
                         Log.d("TouchAnalyticsVM", "Auth result: $message (Match: $isMatch)")
+                        _matchCount.value += if (isMatch) 1 else 0
+                        _nonmatchCount.value += if (!isMatch) 1 else 0
                     } else {
                         Log.e("TouchAnalyticsVM", "Authentication failed: ${response.errorBody()?.string()}")
                     }
