@@ -22,8 +22,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,13 +34,12 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -79,58 +80,89 @@ fun ChatScreen(
 
     Scaffold(
         topBar = {
-            ChatTopBar(
-                userId = userId,
-                navigateBack = navigateBack,
-                showMoreMenu = showMoreMenu,
-                setShowMoreMenu = chatViewModel::setShowMoreMenu,
-            )
+            Column {
+                ChatTopBar(
+                    partner = partner,
+                    navigateBack = navigateBack,
+                    showMoreMenu = showMoreMenu,
+                    setShowMoreMenu = chatViewModel::setShowMoreMenu,
+                )
+
+                HorizontalDivider(
+                    thickness = 0.8.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+            }
         },
         bottomBar = {
-            BottomBar(
-                mode = appMode,
-                enrollmentCount = enrollmentCount,
-                matchCount = matchCount,
-                nonmatchCount = nonmatchCount
-            )
+            Column {
+                HorizontalDivider(
+                    thickness = 0.8.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+
+                BottomBar(
+                    mode = appMode,
+                    enrollmentCount = enrollmentCount,
+                    matchCount = matchCount,
+                    nonmatchCount = nonmatchCount
+                )
+            }
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .background(MaterialTheme.colorScheme.surfaceDim)
-        ) {
-            Text(
-                text = "Most recent messages",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp),
-                textAlign = TextAlign.Center,
-                fontSize = 14.sp,
-                color = Color.Gray
-            )
-
-            LazyColumn(
+        if (partner == null) {
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .weight(1f),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(innerPadding),
+                contentAlignment = Alignment.Center
             ) {
-                items(messages) { message ->
-                    MessageItem(
-                        partner = partner!!,
-                        avatarColor = partner!!.avatarColor,
-                        message = message
+                CircularProgressIndicator()
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            ) {
+                Text(
+                    text = "Most recent messages",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+                    textAlign = TextAlign.Center,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(messages) { message ->
+                        MessageItem(
+                            partner = partner!!,
+                            avatarColor = partner!!.avatarColor,
+                            message = message
+                        )
+                    }
+                }
+
+                Surface(
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 2.dp,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    MessageInput(
+                        input = input,
+                        onValueChange = chatViewModel::setInput
                     )
                 }
             }
-
-            MessageInput(
-                input = input,
-                onValueChange = chatViewModel::setInput
-            )
         }
     }
 }
@@ -150,7 +182,7 @@ fun MessageItem(
                 .align(Alignment.CenterHorizontally)
                 .padding(bottom = 8.dp),
             fontSize = 12.sp,
-            color = Color.Gray
+            color = MaterialTheme.colorScheme.secondary
         )
 
         Row(
@@ -182,17 +214,17 @@ fun MessageItem(
             }
 
             Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = Color.White,
-                modifier = Modifier
-                    .shadow(1.dp, RoundedCornerShape(8.dp))
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant, // Bubble color
+                tonalElevation = 1.dp
             ) {
                 Text(
                     text = message.content,
                     letterSpacing = TextUnit(0.35f, TextUnitType.Sp),
                     lineHeight = 20.sp,
                     style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(12.dp)
+                    modifier = Modifier.padding(12.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -207,33 +239,26 @@ fun MessageInput(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(
-                start = 12.dp,
-                top = 16.dp,
-                end = 12.dp,
-                bottom = 12.dp
-            ),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
     ) {
         OutlinedTextField(
             value = input,
             onValueChange = onValueChange,
             placeholder = { Text("Send a message...") },
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(24.dp),
             modifier = Modifier
                 .weight(1f)
-                .padding(end = 8.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surfaceBright),
+                .padding(end = 8.dp),
             textStyle = TextStyle(
                 fontSize = 16.sp,
-                letterSpacing = TextUnit(0.3f, TextUnitType.Sp),
                 color = MaterialTheme.colorScheme.onSurface
             ),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color.DarkGray,
-                unfocusedBorderColor = Color.LightGray,
-                cursorColor = MaterialTheme.colorScheme.primary
+                focusedBorderColor = Color.Transparent,
+                unfocusedBorderColor = Color.Transparent,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
             ),
             keyboardOptions = KeyboardOptions(
                 imeAction = androidx.compose.ui.text.input.ImeAction.Send
@@ -249,7 +274,8 @@ fun MessageInput(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = "Send"
+                        contentDescription = "Send",
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -260,18 +286,17 @@ fun MessageInput(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatTopBar(
+    partner: ChatPartner?,
     navigateBack: () -> Unit,
     showMoreMenu: Boolean,
-    setShowMoreMenu: (Boolean) -> Unit,
-    userId: Long,
+    setShowMoreMenu: (Boolean) -> Unit
 ) {
     CenterAlignedTopAppBar(
         title = {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = "Messages", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Text(text = "User ID: $userId", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(text = partner?.name ?: "Messages", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
         },
         navigationIcon = {
@@ -292,11 +317,17 @@ fun ChatTopBar(
                     expanded = showMoreMenu,
                     onDismissRequest = { setShowMoreMenu(false) },
                     modifier = Modifier
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .background(MaterialTheme.colorScheme.surfaceContainer)
                 ) {
 
                 }
             }
-        }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            actionIconContentColor = MaterialTheme.colorScheme.onSurface
+        )
     )
 }
