@@ -194,7 +194,9 @@ fun ChatListItem(
             Spacer(modifier = Modifier.width(16.dp))
 
             // Name and Last Message
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
                 Text(
                     text = partner.name,
                     style = MaterialTheme.typography.bodyLarge,
@@ -206,7 +208,8 @@ fun ChatListItem(
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.Gray,
                     overflow = TextOverflow.Ellipsis,
-                    maxLines = 1
+                    maxLines = 1,
+                    modifier = Modifier.padding(end = 8.dp)
                 )
             }
 
