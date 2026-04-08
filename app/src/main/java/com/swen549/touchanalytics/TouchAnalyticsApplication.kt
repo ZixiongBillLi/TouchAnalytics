@@ -20,7 +20,7 @@ class TouchAnalyticsApplication: Application() {
         FirebaseDatabase.getInstance().setPersistenceEnabled(true)
 
         val client = FirebaseClient()
-        userRepository = UserRepository(client)
+        userRepository = UserRepository()
         messageRepository = MessageRepository(client)
         featureRepository = FeatureRepository(client, ApiClient.touchalyticsApiService)
     }
