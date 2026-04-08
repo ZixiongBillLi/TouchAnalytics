@@ -45,6 +45,13 @@ class ChatViewModel(
         }
     }
 
+    private val _input = MutableStateFlow<String>("")
+    val input = _input.asStateFlow()
+
+    fun setInput(value: String) {
+        _input.value = value
+    }
+
     private var _showMoreMenu = MutableStateFlow(false)
     val showMoreMenu = _showMoreMenu.asStateFlow()
 

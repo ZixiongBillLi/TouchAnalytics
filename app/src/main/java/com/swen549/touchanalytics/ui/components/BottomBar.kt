@@ -28,12 +28,6 @@ fun BottomBar(
     matchCount: Int,
     nonmatchCount: Int,
 ) {
-    HorizontalDivider(
-        modifier = Modifier.fillMaxWidth(),
-        thickness = 1.dp,
-        color = Color.DarkGray
-    )
-
     BottomAppBar {
         if (mode == AppMode.ENROLLMENT) {
             Text(
