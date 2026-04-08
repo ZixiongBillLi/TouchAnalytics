@@ -39,6 +39,20 @@ class HomeViewModel(
         }
     }
 
+    private var _searchActive = MutableStateFlow(false)
+    val searchActive = _searchActive.asStateFlow()
+
+    fun setSearchActive(value: Boolean) {
+        _searchActive.value = value
+    }
+
+    private var _query = MutableStateFlow("")
+    val query = _query.asStateFlow()
+
+    fun setQuery(value: String) {
+        _query.value = value
+    }
+
     private var _showMoreMenu = MutableStateFlow(false)
     val showMoreMenu = _showMoreMenu.asStateFlow()
 
