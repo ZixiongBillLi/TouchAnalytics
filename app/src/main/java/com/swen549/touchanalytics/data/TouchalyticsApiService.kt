@@ -9,7 +9,7 @@ import retrofit2.http.Path
 interface TouchalyticsApiService {
     @POST("authenticate/{userID}")
     suspend fun authenticate(
-        @Path("userID") userID: Int,
+        @Path("userID") userID: Long,
         @Body feature: Feature
     ): Response<JsonObject>
 }

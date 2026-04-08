@@ -17,7 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun LoginScreen(
-    onLoginSuccess: (Int) -> Unit,
+    onLoginSuccess: (Long) -> Unit,
     sharedViewModel: TouchAnalyticsViewModel,
 ) {
     val loginState by sharedViewModel.loginState.collectAsStateWithLifecycle()
@@ -94,7 +94,7 @@ fun LoginScreen(
             Button(
                 onClick = {
                     if (userIdText.length >= 3) {
-                        sharedViewModel.login(userIdText.toInt())
+                        sharedViewModel.login(userIdText.toLong())
                     } else {
                         errorText = "User ID must be at least 3 digits"
                     }

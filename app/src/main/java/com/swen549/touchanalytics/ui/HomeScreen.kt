@@ -2,18 +2,22 @@ package com.swen549.touchanalytics.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
+import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,57 +25,149 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.swen549.touchanalytics.Constants
+import com.swen549.touchanalytics.data.ChatPartner
+import com.swen549.touchanalytics.ui.components.BottomBar
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    userId: Int,
+    userId: Long,
+    onPartnerClick: (Long) -> Unit,
     navigateBack: () -> Unit,
     sharedViewModel: TouchAnalyticsViewModel,
-    viewModel: HomeViewModel = viewModel(
+    homeViewModel: HomeViewModel = viewModel(
         factory = HomeViewModel.Factory
     ),
 ) {
+    LaunchedEffect(userId) {
+        homeViewModel.startListening(userId)
+    }
+
     val appMode by sharedViewModel.mode.collectAsStateWithLifecycle()
-    val showMoreMenu by viewModel.showMoreMenu.collectAsStateWithLifecycle()
     val enrollmentCount by sharedViewModel.enrollmentCount.collectAsStateWithLifecycle()
     val matchCount by sharedViewModel.matchCount.collectAsStateWithLifecycle()
     val nonmatchCount by sharedViewModel.nonmatchCount.collectAsStateWithLifecycle()
 
+    val showMoreMenu by homeViewModel.showMoreMenu.collectAsStateWithLifecycle()
+    val searchActive by homeViewModel.searchActive.collectAsStateWithLifecycle()
+    val chatPartners by homeViewModel.chatPartners.collectAsStateWithLifecycle()
+    val query by homeViewModel.query.collectAsStateWithLifecycle()
+
+    if (searchActive) {
+        SearchBar(
+            inputField = {
+                SearchBarDefaults.InputField(
+                    query = query,
+                    onQueryChange = homeViewModel::setQuery,
+                    onSearch = { homeViewModel.setSearchActive(false) },
+                    expanded = true,
+                    onExpandedChange = homeViewModel::setSearchActive,
+                    placeholder = { Text("Search...") },
+                    leadingIcon = {
+                        IconButton(onClick = {
+                            homeViewModel.setSearchActive(false)
+                            homeViewModel.setQuery("")
+                        }) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back"
+                            )
+                        }
+                    },
+                    colors = SearchBarDefaults.inputFieldColors()
+                )
+            },
+            expanded = true,
+            onExpandedChange = homeViewModel::setSearchActive,
+            modifier = Modifier.fillMaxWidth(),
+            windowInsets = SearchBarDefaults.windowInsets,
+            colors = SearchBarDefaults.colors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            )
+        ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            ) {
+                items(chatPartners) { partner ->
+                    if (partner.name.contains(query, ignoreCase = true)) {
+                        ChatListItem(
+                            partner = partner,
+                            onClick = {
+                                onPartnerClick(partner.id)
+                                homeViewModel.setSearchActive(false)
+                                homeViewModel.setQuery("")
+                            }
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(start = 88.dp),
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
-            TopBar(
-                userId = userId,
-                navigateBack = navigateBack,
-                showMoreMenu = showMoreMenu,
-                setShowMoreMenu = viewModel::setShowMoreMenu,
-                logout = sharedViewModel::logout
-            )
+            Column {
+                HomeTopBar(
+                    userId = userId,
+                    navigateBack = navigateBack,
+                    showMoreMenu = showMoreMenu,
+                    setShowMoreMenu = homeViewModel::setShowMoreMenu,
+                    setSearchActive = homeViewModel::setSearchActive,
+                    logout = sharedViewModel::logout
+                )
+
+                HorizontalDivider(
+                    thickness = 0.8.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+            }
         },
         bottomBar = {
-            BottomBar(
-                mode = appMode,
-                enrollmentCount = enrollmentCount,
-                matchCount = matchCount,
-                nonmatchCount = nonmatchCount
-            )
-        }
+            Column {
+                HorizontalDivider(
+                    thickness = 0.8.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+
+                BottomBar(
+                    mode = appMode,
+                    enrollmentCount = enrollmentCount,
+                    matchCount = matchCount,
+                    nonmatchCount = nonmatchCount
+                )
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            items(sampleChatPartners) { partner ->
-                ChatListItem(partner)
+            items(chatPartners) { partner ->
+                ChatListItem(
+                    partner = partner,
+                    onClick = {
+                        onPartnerClick(partner.id)
+                    }
+                )
+
                 HorizontalDivider(
                     modifier = Modifier.padding(start = 72.dp),
                     thickness = 0.5.dp,
-                    color = Color.LightGray
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                 )
             }
         }
@@ -80,22 +176,25 @@ fun HomeScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar(
+fun HomeTopBar(
     navigateBack: () -> Unit,
     showMoreMenu: Boolean,
     setShowMoreMenu: (Boolean) -> Unit,
-    userId: Int,
+    setSearchActive: (Boolean) -> Unit,
+    userId: Long,
     logout: () -> Unit
 ) {
-    TopAppBar(
+    CenterAlignedTopAppBar(
         title = {
-            Column {
-                Text(text = "Messages", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Text(text = "User ID: $userId", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(text = "Messages", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(text = "User ID: $userId", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         },
         actions = {
-            IconButton(onClick = { /* Handle search */ }) {
+            IconButton(onClick = { setSearchActive(true) }) {
                 Icon(Icons.Default.Search, contentDescription = "Search")
             }
 
@@ -108,7 +207,7 @@ fun TopBar(
                     expanded = showMoreMenu,
                     onDismissRequest = { setShowMoreMenu(false) },
                     modifier = Modifier
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .background(MaterialTheme.colorScheme.surfaceContainer)
                 ) {
                     DropdownMenuItem(
                         text = { Text("Logout") },
@@ -124,137 +223,101 @@ fun TopBar(
                         },
                         modifier = Modifier
                             .padding(horizontal = 8.dp)
-                            .clip(RoundedCornerShape(8.dp)
+                            .clip(
+                                RoundedCornerShape(8.dp)
                             )
                     )
                 }
             }
-        }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            actionIconContentColor = MaterialTheme.colorScheme.onSurface
+        )
     )
 }
 
 @Composable
-fun BottomBar(
-    mode: AppMode,
-    enrollmentCount: Int,
-    matchCount: Int,
-    nonmatchCount: Int,
+fun ChatListItem(
+    partner: ChatPartner,
+    onClick: () -> Unit
 ) {
-    BottomAppBar {
-        if (mode == AppMode.ENROLLMENT) {
-            Text(
-                text = "$mode MODE: $enrollmentCount / ${Constants.MIN_STROKE_COUNT}",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.fillMaxWidth()
-            )
-        } else {
-            Row(
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        color = Color.Transparent
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 16.dp,
+                    vertical = 18.dp
+                ),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Avatar
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .size(48.dp)
+                    .background(partner.avatarColor, CircleShape)
             ) {
-                BottomBarColumn(
-                    text = "MATCH",
-                    count = matchCount,
-                    modifier = Modifier.weight(1f)
+                Text(
+                    text = partner.name.split(" ").mapNotNull { it.firstOrNull() }.joinToString("").uppercase(),
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.align(Alignment.Center)
                 )
 
-                VerticalDivider()
+                // Status Dot
+                Box(
+                    modifier = Modifier
+                        .size(14.dp)
+                        .align(Alignment.BottomEnd)
+                        .background(Color.LightGray, shape = CircleShape)
+                        .border(2.dp, MaterialTheme.colorScheme.surface, shape = CircleShape)
+                )
+            }
 
-                BottomBarColumn(
-                    text = "NONMATCH",
-                    count = nonmatchCount,
-                    modifier = Modifier.weight(1f),
-                    color = MaterialTheme.colorScheme.error
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Name and Last Message
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = partner.name,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Text(
+                        text = partner.lastMessageTimestamp,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = partner.lastMessage,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1,
+                    modifier = Modifier.padding(end = 8.dp)
                 )
             }
         }
-    }
-}
-
-@Composable
-fun BottomBarColumn(
-    text: String,
-    count: Int,
-    modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.primary
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-        modifier = modifier
-    ) {
-        Text(
-            text = text,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-        )
-
-        Text(
-            text = count.toString(),
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-    }
-}
-
-@Composable
-fun ChatListItem(partner: ChatPartner) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Avatar
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .background(partner.avatarColor, CircleShape)
-        ) {
-            Text(
-                text = partner.name.split(" ").mapNotNull { it.firstOrNull() }.joinToString("").uppercase(),
-                color = Color.White,
-                modifier = Modifier.align(Alignment.Center)
-            )
-
-            // Status Dot
-            Box(
-                modifier = Modifier
-                    .size(14.dp)
-                    .align(Alignment.BottomEnd)
-                    .background(Color.LightGray, shape = CircleShape)
-                    .border(2.dp, Color.White, shape = CircleShape)
-            )
-        }
-        
-        Spacer(modifier = Modifier.width(16.dp))
-        
-        // Name and Last Message
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = partner.name,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = partner.lastMessage,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray,
-                maxLines = 1
-            )
-        }
-        
-        // Time
-        Text(
-            text = partner.timestamp,
-            style = MaterialTheme.typography.bodySmall,
-            color = Color.Gray
-        )
     }
 }
