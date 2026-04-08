@@ -26,11 +26,11 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "SERVER_URL", "\"http://10.117.21.101:5001\"") // 127.0.0.1 refers to emulator itself; 10.0.2.2 refers to the host computer (where server is running)
+            buildConfigField("String", "SERVER_URL", "\"http://10.200.100.180:5001\"") // 127.0.0.1 refers to emulator itself; 10.*.*.* refers to the host computer (where server is running)
         }
 
         release {
-            buildConfigField("String", "SERVER_URL", "\"http://10.117.21.101:5001\"") // Set to persistent server URL in production
+            buildConfigField("String", "SERVER_URL", "\"http://10.200.100.180:5001\"") // Set to persistent server URL in production
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
