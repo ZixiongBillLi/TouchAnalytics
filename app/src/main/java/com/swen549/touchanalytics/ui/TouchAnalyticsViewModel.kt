@@ -130,18 +130,18 @@ class TouchAnalyticsViewModel(
             }
 
             PointerEventType.Move -> {
-                _activePoints.value += TouchPoint(x, y, timestamp, pressure, size)
+                _activePoints.value = _activePoints.value + TouchPoint(x, y, timestamp, pressure, size)
             }
 
             PointerEventType.Release -> {
-                _activePoints.value += TouchPoint(x, y, timestamp, pressure, size)
+                val finalPoints = _activePoints.value + TouchPoint(x, y, timestamp, pressure, size)
 
-                if (_activePoints.value.size > 3 && _userId.value != null) {
+                if (finalPoints.size > 3 && _userId.value != null) {
                     val newStroke = Stroke(
                         userId = _userId.value!!,
                         startTime = _strokeStartTime,
                         endTime = timestamp,
-                        points = _activePoints.value
+                        points = finalPoints
                     )
 
                     processSwipe(_userId.value!!, newStroke.toFeature())
@@ -177,5 +177,9 @@ class TouchAnalyticsViewModel(
                 Log.e("TouchAnalyticsVM", "Error processing swipe: ${e.message}")
             }
         }
+    }
+
+    fun processStroke(stroke: Stroke) {
+        processSwipe(stroke.userId, stroke.toFeature())
     }
 }
