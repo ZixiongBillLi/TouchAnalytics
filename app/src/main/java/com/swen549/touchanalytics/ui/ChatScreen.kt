@@ -1,19 +1,18 @@
 package com.swen549.touchanalytics.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -44,15 +43,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.swen549.touchanalytics.data.ChatPartner
-import com.swen549.touchanalytics.data.Message
 import com.swen549.touchanalytics.ui.components.BottomBar
+import com.swen549.touchanalytics.ui.components.MessageItem
 
 @Composable
 fun ChatScreen(
@@ -126,29 +123,36 @@ fun ChatScreen(
                     .padding(innerPadding)
                     .background(MaterialTheme.colorScheme.surfaceContainerLow)
             ) {
-                Text(
-                    text = "Most recent messages",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp),
-                    textAlign = TextAlign.Center,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
                         .weight(1f),
                     contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    reverseLayout = false // standard chat layout or reversed? usually standard for this app
                 ) {
+                    item {
+                        Text(
+                            text = "Most recent messages",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp),
+                            textAlign = TextAlign.Center,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
                     items(messages) { message ->
                         MessageItem(
                             partner = partner!!,
                             avatarColor = partner!!.avatarColor,
                             message = message
                         )
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(500.dp))
                     }
                 }
 
@@ -162,70 +166,6 @@ fun ChatScreen(
                         onValueChange = chatViewModel::setInput
                     )
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun MessageItem(
-    partner: ChatPartner,
-    avatarColor: Color,
-    message: Message
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Text(
-            text = message.timestampString,
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(bottom = 8.dp),
-            fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.secondary
-        )
-
-        Row(
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(avatarColor, CircleShape)
-                    .padding(top = 4.dp)
-            ) {
-                Text(
-                    text = partner.name.split(" ").mapNotNull { it.firstOrNull() }.joinToString("")
-                        .uppercase(),
-                    color = Color.White,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-
-                // Status Dot
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .align(Alignment.BottomEnd)
-                        .background(Color.LightGray, shape = CircleShape)
-                        .border(2.dp, Color.White, shape = CircleShape)
-                )
-            }
-
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant, // Bubble color
-                tonalElevation = 1.dp
-            ) {
-                Text(
-                    text = message.content,
-                    letterSpacing = TextUnit(0.35f, TextUnitType.Sp),
-                    lineHeight = 20.sp,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(12.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
         }
     }
