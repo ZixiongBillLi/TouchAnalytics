@@ -84,15 +84,23 @@ class TouchAnalyticsViewModel(
                 _loginState.value = LoginStatus.LoggedIn(user.id)
 
                 observationJobs.forEach { it.cancel() }
-                observationJobs += viewModelScope.launch {
-                    featureRepository.getEnrollmentCount(user.id).collect { count ->
-                        _enrollmentCount.value = count
+                observationJobs = listOf(
+                    viewModelScope.launch {
+                        featureRepository.getEnrollmentCount(user.id).collect { count ->
+                            _enrollmentCount.value = count
 
-                        if (count >= Constants.MIN_STROKE_COUNT) {
-                            _mode.value = AppMode.VERIFICATION
+                            if (count >= Constants.MIN_STROKE_COUNT) {
+                                _mode.value = AppMode.VERIFICATION
+                            }
+                        }
+                    },
+                    viewModelScope.launch {
+                        featureRepository.getAllVerifications(user.id).collect { verifications ->
+                            _matchCount.value = verifications.count { it.match }
+                            _nonmatchCount.value = verifications.count { !it.match }
                         }
                     }
-                }
+                )
             } catch (e: Exception) {
                 _loginState.value = LoginStatus.Error(e.message ?: "Unknown error")
             }
@@ -100,6 +108,13 @@ class TouchAnalyticsViewModel(
     }
 
     fun logout() {
+        val currentUserId = _userId.value
+        if (currentUserId != null) {
+            viewModelScope.launch {
+                featureRepository.clearVerifications(currentUserId)
+            }
+        }
+
         observationJobs.forEach { it.cancel() }
         observationJobs = emptyList()
         _loginState.value = LoginStatus.NotLoggedIn
@@ -167,8 +182,12 @@ class TouchAnalyticsViewModel(
                         val message = response.body()!!.get("message").asString
 
                         Log.d("TouchAnalyticsVM", "Auth result: $message (Match: $isMatch)")
-                        _matchCount.value += if (isMatch) 1 else 0
-                        _nonmatchCount.value += if (!isMatch) 1 else 0
+                        
+                        // Save the verification result to Firebase
+                        featureRepository.saveFeature(
+                            userId, 
+                            FeatureType.Verification(feature = feature, match = isMatch)
+                        )
                     } else {
                         Log.e("TouchAnalyticsVM", "Authentication failed: ${response.errorBody()?.string()}")
                     }
