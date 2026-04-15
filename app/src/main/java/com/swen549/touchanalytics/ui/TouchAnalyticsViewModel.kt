@@ -73,8 +73,9 @@ class TouchAnalyticsViewModel(
                 _userId.value = user.id
 
                 val initialCount = featureRepository.getEnrollmentCount(user.id).first()
+                Log.d("TouchAnalyticsVM", "Login success for $userId. Initial count: $initialCount")
+                
                 _enrollmentCount.value = initialCount
-
                 _mode.value = if (initialCount < Constants.MIN_STROKE_COUNT) {
                     AppMode.ENROLLMENT
                 } else {
@@ -88,9 +89,13 @@ class TouchAnalyticsViewModel(
                     viewModelScope.launch {
                         featureRepository.getEnrollmentCount(user.id).collect { count ->
                             _enrollmentCount.value = count
-
                             if (count >= Constants.MIN_STROKE_COUNT) {
-                                _mode.value = AppMode.VERIFICATION
+                                if (_mode.value != AppMode.VERIFICATION) {
+                                    Log.d("TouchAnalyticsVM", "Switching to VERIFICATION mode for $userId")
+                                    _mode.value = AppMode.VERIFICATION
+                                }
+                            } else {
+                                _mode.value = AppMode.ENROLLMENT
                             }
                         }
                     },
@@ -114,7 +119,7 @@ class TouchAnalyticsViewModel(
                 featureRepository.clearVerifications(currentUserId)
             }
         }
-
+        
         observationJobs.forEach { it.cancel() }
         observationJobs = emptyList()
         _loginState.value = LoginStatus.NotLoggedIn
@@ -138,6 +143,8 @@ class TouchAnalyticsViewModel(
         val timestamp = change.uptimeMillis
         val pressure = change.pressure
 
+        val currentUserId = _userId.value ?: return
+
         when (type) {
             PointerEventType.Press -> {
                 _strokeStartTime = timestamp
@@ -151,15 +158,15 @@ class TouchAnalyticsViewModel(
             PointerEventType.Release -> {
                 val finalPoints = _activePoints.value + TouchPoint(x, y, timestamp, pressure, size)
 
-                if (finalPoints.size > 3 && _userId.value != null) {
+                if (finalPoints.size > 3) {
                     val newStroke = Stroke(
-                        userId = _userId.value!!,
+                        userId = currentUserId,
                         startTime = _strokeStartTime,
                         endTime = timestamp,
                         points = finalPoints
                     )
 
-                    processSwipe(_userId.value!!, newStroke.toFeature())
+                    processSwipe(currentUserId, newStroke.toFeature())
                 }
 
                 _activePoints.value = emptyList()
@@ -168,32 +175,34 @@ class TouchAnalyticsViewModel(
     }
 
     fun processSwipe(userId: Long, feature: Feature) {
+        val currentMode = _mode.value
+        
         viewModelScope.launch {
             try {
-                if (_mode.value == AppMode.ENROLLMENT) {
-                    featureRepository.saveFeature(userId, FeatureType.Enrollment(feature))
-                }
+                val consistentFeature = feature.copy(userId = userId)
 
-                if (_mode.value == AppMode.VERIFICATION) {
-                    val response = featureRepository.authenticateFeature(userId, feature)
+                if (currentMode == AppMode.ENROLLMENT) {
+                    featureRepository.saveFeature(userId, FeatureType.Enrollment(consistentFeature))
+                } else if (currentMode == AppMode.VERIFICATION) {
+                    val response = featureRepository.authenticateFeature(userId, consistentFeature)
 
                     if (response.isSuccessful && response.body() != null) {
                         val isMatch = response.body()!!.get("match").asBoolean
                         val message = response.body()!!.get("message").asString
 
-                        Log.d("TouchAnalyticsVM", "Auth result: $message (Match: $isMatch)")
+                        Log.d("TouchAnalyticsVM", "Auth result for $userId: $message (Match: $isMatch)")
                         
                         // Save the verification result to Firebase
                         featureRepository.saveFeature(
                             userId, 
-                            FeatureType.Verification(feature = feature, match = isMatch)
+                            FeatureType.Verification(feature = consistentFeature, match = isMatch)
                         )
                     } else {
-                        Log.e("TouchAnalyticsVM", "Authentication failed: ${response.errorBody()?.string()}")
+                        Log.e("TouchAnalyticsVM", "Authentication failed for $userId: ${response.errorBody()?.string()}")
                     }
                 }
             } catch (e: Exception) {
-                Log.e("TouchAnalyticsVM", "Error processing swipe: ${e.message}")
+                Log.e("TouchAnalyticsVM", "Error processing swipe for $userId: ${e.message}")
             }
         }
     }
