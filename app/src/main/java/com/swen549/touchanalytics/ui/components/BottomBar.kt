@@ -48,13 +48,14 @@ fun BottomBar(
                 BottomBarColumn(
                     text = "MATCH",
                     count = matchCount,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    color = Color.Green
                 )
 
                 VerticalDivider()
 
                 BottomBarColumn(
-                    text = "NONMATCH",
+                    text = "NOT MATCH",
                     count = nonmatchCount,
                     modifier = Modifier.weight(1f),
                     color = MaterialTheme.colorScheme.error

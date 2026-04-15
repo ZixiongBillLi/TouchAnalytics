@@ -30,14 +30,30 @@ class FeatureRepository(
 
     suspend fun saveFeature(userId: Long, feature: FeatureType): Boolean = try {
         withTimeout(Constants.DATABASE_TIMEOUT) {
+            val ref = firebaseClient.featuresRef.child(userId.toString())
+            
             val dataToSave = when (feature) {
                 is FeatureType.Enrollment -> feature.feature
-                is FeatureType.Verification -> feature.feature
+                is FeatureType.Verification -> {
+                    mapOf(
+                        "userId" to feature.feature.userId,
+                        "startX" to feature.feature.startX,
+                        "startY" to feature.feature.startY,
+                        "stopX" to feature.feature.stopX,
+                        "stopY" to feature.feature.stopY,
+                        "strokeDuration" to feature.feature.strokeDuration,
+                        "midStrokeArea" to feature.feature.midStrokeArea,
+                        "midStrokePressure" to feature.feature.midStrokePressure,
+                        "directionEndToEnd" to feature.feature.directionEndToEnd,
+                        "averageDirection" to feature.feature.averageDirection,
+                        "averageVelocity" to feature.feature.averageVelocity,
+                        "pairwiseVelocityPercentile" to feature.feature.pairwiseVelocityPercentile,
+                        "match" to feature.match
+                    )
+                }
             }
 
-            firebaseClient.featuresRef
-                .child(userId.toString())
-                .push()
+            ref.push()
                 .setValue(dataToSave)
                 .await()
                 
@@ -49,12 +65,27 @@ class FeatureRepository(
         false
     }
 
+    suspend fun clearVerifications(userId: Long) {// clear match/not match data on logout
+        try {
+            val ref = firebaseClient.featuresRef.child(userId.toString())
+            val snapshot = ref.get().await()
+            snapshot.children.forEach { child ->
+                if (child.hasChild("match")) { // remove data with "match" to clear verification data
+                    child.ref.removeValue().await()
+                }
+            }
+            Log.d(TAG, "clearVerifications(): Previous verifications cleared for user $userId")
+        } catch (e: Exception) {
+            Log.e(TAG, "clearVerifications(): Error clearing verifications: ${e.message}")
+        }
+    }
+
     fun getEnrollmentCount(userId: Long): Flow<Int> = callbackFlow {
         val ref = firebaseClient.featuresRef.child(userId.toString())
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val count = snapshot.childrenCount.toInt()
-                Log.d(TAG, "getEnrollmentCount(): Count for $userId: $count")
+                val count = snapshot.children.count { !it.hasChild("match") }
+                Log.d(TAG, "getEnrollmentCount(): Enrollment count for $userId: $count")
                 trySend(count)
             }
 
@@ -73,8 +104,11 @@ class FeatureRepository(
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val list = snapshot.children.mapNotNull { child ->
-                    val f = child.getValue<Feature>()
-                    if (f != null) FeatureType.Verification(f) else null
+                    val match = child.child("match").getValue<Boolean>()
+                    if (match != null) {
+                        val feature = child.getValue<Feature>()
+                        if (feature != null) FeatureType.Verification(feature, match) else null
+                    } else null
                 }
                 trySend(list)
             }
