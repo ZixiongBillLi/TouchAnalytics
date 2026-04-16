@@ -30,7 +30,7 @@ android {
         }
 
         release {
-            buildConfigField("String", "SERVER_URL", "\"http://10.200.100.180:5001\"") // Set to persistent server URL in production
+            buildConfigField("String", "SERVER_URL", "\"http://touchalytics-server-ml-env.eba-3m38xpji.us-east-1.elasticbeanstalk.com\"") // Set to persistent server URL in production
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
