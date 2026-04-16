@@ -112,9 +112,19 @@ https://swen-549-touchanalytics-default-rtdb.firebaseio.com/
 
 ---
 
+## Persistent ML Server Configuration
+
+This project uses a persistent Flask ML server for verification.
+
+The ML server is hosted on AWS Elastic Beanstalk.
+
+### Notes
+
+If logcat is encountering an error with hostname on swipe, ensure that the emulator has an active internet connection.
+Emulator may need to be restarted and cold booted.
 ## Local ML Server Configuration
 
-This project uses a local Flask ML server for verification.
+This project may also use a local Flask ML server for verification.
 
 ### Port
 
