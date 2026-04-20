@@ -8,5 +8,6 @@
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">10.0.2.2</domain>
         <domain includeSubdomains="true">touchalytics-server-ml-env.eba-3m38xpji.us-east-1.elasticbeanstalk.com</domain>
+        <domain includeSubdomains="true">10.200.100.1801</domain>
     </domain-config>
 </network-security-config>

@@ -6,5 +6,5 @@ object Constants {
 
     const val FIREBASE_URL = "https://swen-549-touchanalytics-default-rtdb.firebaseio.com/"
 
-    const val ML_SERVER_URL = "http://touchalytics-server-ml-env.eba-3m38xpji.us-east-1.elasticbeanstalk.com/"
+    const val ML_SERVER_URL = "http://129.21.43.225:5001"
 }
