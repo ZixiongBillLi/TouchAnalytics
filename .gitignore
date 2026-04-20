@@ -14,3 +14,4 @@
 .cxx
 local.properties
 TouchalyticsServer/.venv/
+TouchalyticsServer/firebase_service_key.json
